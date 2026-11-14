@@ -1,0 +1,56 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: investsim
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/investsim}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+    show-sql: false
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+app:
+  admin-email: ${ADMIN_EMAIL:admin@investsim.co}
+  admin-password: ${ADMIN_PASSWORD:Admin123!}
+  default-initial-balance: ${DEFAULT_INITIAL_BALANCE:100000}
+  jwt:
+    secret: ${JWT_SECRET:investsim-dev-secret-key-change-me-0123456789}
+    expiration-hours: ${JWT_EXPIRATION_HOURS:2}
+
+marketdata:
+  alphavantage:
+    base-url: ${ALPHA_VANTAGE_BASE_URL:https://www.alphavantage.co}
+    api-key: ${ALPHA_VANTAGE_API_KEY:}
+  twelvedata:
+    base-url: ${TWELVE_DATA_BASE_URL:https://api.twelvedata.com}
+    api-key: ${TWELVE_DATA_API_KEY:}
+  stooq:
+    base-url: ${STOOQ_BASE_URL:https://stooq.com}
+  synthetic:
+    enabled: ${SYNTHETIC_MARKET_DATA_ENABLED:true}
+    base-price: ${SYNTHETIC_BASE_PRICE:100}
+
+ingestion:
+  enabled: ${INGESTION_ENABLED:true}
+  cron: ${INGESTION_CRON:0 0 */6 * * *}
+  history-days: ${INGESTION_HISTORY_DAYS:365}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    co.uis.investsim: INFO

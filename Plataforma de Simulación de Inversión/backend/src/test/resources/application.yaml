@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:investsim-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+app:
+  admin-email: admin@investsim.test
+  admin-password: investsim-test-admin
+  default-initial-balance: 100000
+  jwt:
+    secret: investsim-test-secret-key-0123456789abcdefghijklmnopqrstuvwxyz
+    expiration-hours: 2
+
+marketdata:
+  alphavantage:
+    base-url: https://www.alphavantage.co
+    api-key:
+  twelvedata:
+    base-url: https://api.twelvedata.com
+    api-key:
+  stooq:
+    base-url: https://stooq.com
+  synthetic:
+    enabled: true
+    base-price: 100
+
+ingestion:
+  enabled: false
+  cron: 0 0 */6 * * *
+  history-days: 30
