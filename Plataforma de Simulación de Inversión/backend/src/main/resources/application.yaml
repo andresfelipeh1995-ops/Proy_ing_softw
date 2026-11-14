@@ -5,7 +5,7 @@ spring:
   application:
     name: investsim
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/investsim}
+    url: jdbc:postgresql://admin-db-andresfelipeh1995-c961.b.aivencloud.com:17220/proy_ingsoft_bd?sslmode=require
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
@@ -18,8 +18,9 @@ spring:
         format_sql: false
     show-sql: false
   jackson:
-    serialization:
-      write-dates-as-timestamps: false
+    datatype:
+      datetime:
+        write-dates-as-timestamps: false
 
 app:
   admin-email: ${ADMIN_EMAIL:admin@investsim.co}
