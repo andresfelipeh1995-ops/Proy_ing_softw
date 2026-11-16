@@ -16,6 +16,10 @@ export function updateMyPassword(passwordData) {
   return api.patch("/users/me/password", passwordData);
 }
 
+export function addBalance(amount) {
+  return api.post("/users/me/balance", { amount });
+}
+
 export function deactivateMyAccount() {
   return api.patch("/users/me");
 }

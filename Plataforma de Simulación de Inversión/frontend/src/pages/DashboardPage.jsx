@@ -182,6 +182,10 @@ export default function DashboardPage() {
               <div className="bg-white bg-opacity-10 border border-white border-opacity-10 rounded-3 p-3">
                 <p className="small text-white-50 mb-2">Accesos rápidos</p>
                 <div className="d-grid gap-2">
+                  <Link className="btn btn-light btn-sm text-start" to="/perfil?tab=saldo">
+                    <i className="fa-solid fa-circle-plus me-2 text-success" />
+                    Agregar saldo a mi cuenta
+                  </Link>
                   <Link className="btn btn-light btn-sm text-start" to="/operar">
                     <i className="fa-solid fa-right-left me-2 text-primary" />
                     Comprar o vender instrumentos

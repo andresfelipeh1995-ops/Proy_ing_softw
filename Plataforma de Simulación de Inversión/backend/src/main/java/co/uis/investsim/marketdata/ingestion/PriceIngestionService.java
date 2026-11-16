@@ -97,11 +97,30 @@ public class PriceIngestionService {
                 upsertHistoryPrice(instrument, point, "Provider");
             }
 
-            if (!points.isEmpty() && instrument.getCurrentPrice() == null) {
+            if (!points.isEmpty()) {
                 PricePoint last = points.get(points.size() - 1);
-                instrument.setCurrentPrice(last.close());
-                instrument.setLastUpdated(last.date().atStartOfDay().toInstant(java.time.ZoneOffset.UTC));
-                instrumentRepository.save(instrument);
+                Instant lastDate = last.date().atStartOfDay().toInstant(java.time.ZoneOffset.UTC);
+                boolean missingPrice = instrument.getCurrentPrice() == null
+                        || instrument.getCurrentPrice().compareTo(BigDecimal.ZERO) <= 0;
+                boolean newerPrice = instrument.getLastUpdated() == null
+                        || instrument.getLastUpdated().isBefore(lastDate);
+
+                if (missingPrice || newerPrice) {
+                    instrument.setCurrentPrice(last.close());
+                    instrument.setLastUpdated(lastDate);
+
+                    if (points.size() > 1) {
+                        PricePoint previous = points.get(points.size() - 2);
+                        instrument.setPreviousClose(previous.close());
+                        instrument.setDailyChangePercent(
+                                NumberUtils.percentChange(last.close(), previous.close()));
+                    } else if (instrument.getPreviousClose() == null) {
+                        instrument.setPreviousClose(last.close());
+                        instrument.setDailyChangePercent(BigDecimal.ZERO.setScale(4));
+                    }
+
+                    instrumentRepository.save(instrument);
+                }
             }
 
             saveLog("Router", instrument.getSymbol(), "HISTORY", "SUCCESS",

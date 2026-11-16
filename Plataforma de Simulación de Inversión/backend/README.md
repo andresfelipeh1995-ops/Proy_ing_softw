@@ -91,6 +91,7 @@ Las pruebas usan H2 en memoria con `MODE=PostgreSQL`, por lo que no requieren un
 | GET | `/api/users/me` | Perfil del usuario autenticado |
 | PUT | `/api/users/me` | Actualizar perfil |
 | PATCH | `/api/users/me/password` | Cambiar contraseña |
+| POST | `/api/users/me/balance` | Agregar saldo ficticio a la cuenta |
 
 ### Mercado
 

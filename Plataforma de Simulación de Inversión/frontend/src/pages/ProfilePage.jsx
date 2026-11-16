@@ -15,7 +15,9 @@ import PageHeader from "../components/PageHeader";
 import StatCard from "../components/StatCard";
 import LoadingState from "../components/LoadingState";
 import { useAuth } from "../auth/AuthContext";
+import { useSearchParams } from "react-router-dom";
 import {
+  addBalance,
   deactivateMyAccount,
   getMyProfile,
   updateMyPassword,
@@ -30,6 +32,7 @@ import { formatDate, formatMoney } from "../utils/format";
 
 export default function ProfilePage() {
   const { refreshSession, logout } = useAuth();
+  const [searchParams] = useSearchParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -40,6 +43,9 @@ export default function ProfilePage() {
   });
   const [profileErrors, setProfileErrors] = useState({});
   const [savingProfile, setSavingProfile] = useState(false);
+  const [balanceAmount, setBalanceAmount] = useState("");
+  const [balanceErrors, setBalanceErrors] = useState({});
+  const [addingBalance, setAddingBalance] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -146,6 +152,35 @@ export default function ProfilePage() {
     }
   }
 
+  async function handleBalanceSubmit(event) {
+    event.preventDefault();
+    setBalanceErrors({});
+
+    const amount = Number(balanceAmount);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setBalanceErrors({ amount: "Ingresa un monto mayor que cero." });
+      return;
+    }
+
+    setAddingBalance(true);
+
+    try {
+      const response = await addBalance(amount);
+      setProfile(response.data);
+      setBalanceAmount("");
+      notifySuccess(response.message);
+    } catch (err) {
+      if (err.data && typeof err.data === "object") {
+        setBalanceErrors(err.data);
+      } else {
+        notifyError(err.message);
+      }
+    } finally {
+      setAddingBalance(false);
+    }
+  }
+
   async function handleDeactivate() {
     const confirmed = await confirmAction({
       title: "Desactivar mi cuenta",
@@ -226,7 +261,10 @@ export default function ProfilePage() {
 
       <Card className="is-card">
         <Card.Body className="p-4">
-          <Tabs defaultActiveKey="datos" className="is-tabs mb-4">
+          <Tabs
+            defaultActiveKey={searchParams.get("tab") === "saldo" ? "saldo" : "datos"}
+            className="is-tabs mb-4"
+          >
             <Tab eventKey="datos" title="Datos personales">
               <Form noValidate onSubmit={handleProfileSubmit} className="mt-2">
                 <Row className="g-3">
@@ -299,6 +337,72 @@ export default function ProfilePage() {
                     <>
                       <i className="fa-solid fa-floppy-disk me-1" />
                       Guardar cambios
+                    </>
+                  )}
+                </Button>
+              </Form>
+            </Tab>
+
+            <Tab eventKey="saldo" title="Agregar saldo">
+              <Form noValidate onSubmit={handleBalanceSubmit} className="mt-2">
+                <p className="text-muted">
+                  Agrega saldo ficticio a tu cuenta para seguir simulando
+                  operaciones. Saldo disponible actual:{" "}
+                  <strong>{formatMoney(profile?.availableBalance)}</strong>.
+                </p>
+                <Row className="g-3 align-items-end">
+                  <Col md={6}>
+                    <Form.Group controlId="balanceAmount">
+                      <Form.Label>Monto a agregar (USD)</Form.Label>
+                      <Form.Control
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="0.00"
+                        value={balanceAmount}
+                        onChange={(event) => setBalanceAmount(event.target.value)}
+                        isInvalid={Boolean(balanceErrors.amount)}
+                        required
+                      />
+                      {balanceErrors.amount && (
+                        <div className="invalid-feedback d-block">
+                          {balanceErrors.amount}
+                        </div>
+                      )}
+                    </Form.Group>
+                  </Col>
+                  <Col md={6}>
+                    <div className="d-flex flex-wrap gap-2">
+                      {[1000, 5000, 10000].map((amount) => (
+                        <Button
+                          key={amount}
+                          type="button"
+                          size="sm"
+                          variant="outline-secondary"
+                          onClick={() => setBalanceAmount(String(amount))}
+                        >
+                          +{formatMoney(amount)}
+                        </Button>
+                      ))}
+                    </div>
+                  </Col>
+                </Row>
+
+                <Button
+                  type="submit"
+                  variant="success"
+                  className="mt-4"
+                  disabled={addingBalance}
+                >
+                  {addingBalance ? (
+                    <>
+                      <Spinner as="span" animation="border" size="sm" className="me-2" />
+                      Agregando...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-circle-plus me-1" />
+                      Agregar saldo
                     </>
                   )}
                 </Button>

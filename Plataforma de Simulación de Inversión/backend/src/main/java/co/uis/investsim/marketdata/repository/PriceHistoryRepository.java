@@ -16,5 +16,7 @@ public interface PriceHistoryRepository extends JpaRepository<PriceHistory, Long
 
     Optional<PriceHistory> findTopBySymbolOrderByDateDesc(String symbol);
 
+    List<PriceHistory> findTop2BySymbolOrderByDateDesc(String symbol);
+
     long countBySymbol(String symbol);
 }

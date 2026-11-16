@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
 
@@ -111,8 +112,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserEntity adjustBalance(String email, BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("El monto debe ser mayor que cero.");
+        }
+
         UserEntity existing = findByEmail(email);
-        BigDecimal newBalance = existing.getAvailableBalance().add(amount);
+        BigDecimal newBalance = existing.getAvailableBalance()
+                .add(amount)
+                .setScale(2, RoundingMode.HALF_UP);
 
         if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
             throw new BusinessException("Saldo insuficiente para realizar la operación.");

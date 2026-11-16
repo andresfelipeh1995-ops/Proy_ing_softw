@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -48,11 +49,14 @@ public class MarketDataService {
                 ? instrumentRepository.findByActiveTrue()
                 : instrumentRepository.findByTypeAndActiveTrue(type);
 
-        return instruments.stream().map(mapper::toDto).toList();
+        return instruments.stream()
+                .map(this::applyLatestHistoryPrice)
+                .map(mapper::toDto)
+                .toList();
     }
 
     public InstrumentDTO getInstrument(String symbol) {
-        return mapper.toDto(findInstrument(symbol));
+        return mapper.toDto(applyLatestHistoryPrice(findInstrument(symbol)));
     }
 
     public MarketQuote getQuote(String symbol) {
@@ -70,7 +74,10 @@ public class MarketDataService {
             }
         }
 
-        if (instrument.getCurrentPrice() == null) {
+        instrument = applyLatestHistoryPrice(instrument);
+
+        if (instrument.getCurrentPrice() == null
+                || instrument.getCurrentPrice().compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException("No hay una cotización disponible para " + symbol
                     + ". Configure un proveedor de datos de mercado o ejecute una ingesta manual.");
         }
@@ -145,7 +152,50 @@ public class MarketDataService {
     }
 
     public BigDecimal currentPriceOrZero(Instrument instrument) {
-        return instrument.getCurrentPrice() == null ? NumberUtils.scale(BigDecimal.ZERO)
-                : instrument.getCurrentPrice();
+        Instrument resolved = applyLatestHistoryPrice(instrument);
+        return resolved.getCurrentPrice() == null ? NumberUtils.scale(BigDecimal.ZERO)
+                : resolved.getCurrentPrice();
+    }
+
+    private Instrument applyLatestHistoryPrice(Instrument instrument) {
+        if (instrument.getCurrentPrice() != null
+                && instrument.getCurrentPrice().compareTo(BigDecimal.ZERO) > 0) {
+            return instrument;
+        }
+
+        List<PriceHistory> latest = priceHistoryRepository
+                .findTop2BySymbolOrderByDateDesc(instrument.getSymbol());
+
+        if (latest.isEmpty()) {
+            return instrument;
+        }
+
+        PriceHistory current = latest.get(0);
+
+        if (current.getClose() == null || current.getClose().compareTo(BigDecimal.ZERO) <= 0) {
+            return instrument;
+        }
+
+        instrument.setCurrentPrice(current.getClose());
+
+        PriceHistory previous = latest.size() > 1 ? latest.get(1) : null;
+
+        if (previous != null && previous.getClose() != null
+                && previous.getClose().compareTo(BigDecimal.ZERO) > 0) {
+            instrument.setPreviousClose(previous.getClose());
+            instrument.setDailyChangePercent(
+                    NumberUtils.percentChange(current.getClose(), previous.getClose()));
+        } else if (instrument.getPreviousClose() == null
+                || instrument.getPreviousClose().compareTo(BigDecimal.ZERO) <= 0) {
+            instrument.setPreviousClose(current.getClose());
+            instrument.setDailyChangePercent(BigDecimal.ZERO.setScale(4));
+        }
+
+        instrument.setLastUpdated(current.getDate().atStartOfDay().toInstant(ZoneOffset.UTC));
+
+        log.info("Precio de {} recuperado del histórico más reciente ({}).",
+                instrument.getSymbol(), current.getDate());
+
+        return instrumentRepository.save(instrument);
     }
 }

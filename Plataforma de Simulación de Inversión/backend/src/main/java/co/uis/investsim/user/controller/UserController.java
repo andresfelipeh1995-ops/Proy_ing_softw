@@ -3,6 +3,7 @@ package co.uis.investsim.user.controller;
 import co.uis.investsim.common.api.ApiResponse;
 import co.uis.investsim.common.api.ResponseBuilder;
 import co.uis.investsim.security.JwtUtil;
+import co.uis.investsim.user.dto.BalanceAdjustmentDTO;
 import co.uis.investsim.user.dto.PasswordUpdateDTO;
 import co.uis.investsim.user.dto.UserCreateDTO;
 import co.uis.investsim.user.dto.UserDTO;
@@ -64,6 +65,13 @@ public class UserController {
                                                             Principal principal) {
         userService.updatePassword(principal.getName(), in);
         return ResponseBuilder.ok("Se ha actualizado correctamente la contraseña.");
+    }
+
+    @PostMapping("/me/balance")
+    public ResponseEntity<ApiResponse<UserDTO>> addBalance(@Valid @RequestBody BalanceAdjustmentDTO in,
+                                                           Principal principal) {
+        UserEntity updated = userService.adjustBalance(principal.getName(), in.getAmount());
+        return ResponseBuilder.ok("Se ha agregado saldo a tu cuenta.", userMapper.toDto(updated));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
