@@ -5,7 +5,7 @@ spring:
   application:
     name: investsim
   datasource:
-    url: jdbc:postgresql://admin-db-andresfelipeh1995-c961.b.aivencloud.com:17220/proy_ingsoft_bd?sslmode=require
+    url: ${DB_URL:jdbc:postgresql://admin-db-andresfelipeh1995-c961.b.aivencloud.com:17220/proy_ingsoft_bd?sslmode=require}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
